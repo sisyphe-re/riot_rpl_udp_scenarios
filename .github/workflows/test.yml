@@ -1,0 +1,28 @@
+name: "Run the experiments"
+on:
+  pull_request:
+  push:
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2.3.4
+    - uses: cachix/install-nix-action@v13
+      with:
+        install_url: https://nixos-nix-install-tests.cachix.org/serve/lb41az54kzk6j12p81br4bczary7m145/install
+        install_options: '--tarball-url-prefix https://nixos-nix-install-tests.cachix.org/serve'
+        extra_nix_config: |
+          experimental-features = nix-command flakes
+    - name: Build the scripts
+      run: nix build
+    - name: set secrets
+      env:
+        IOT_LAB_KEY: ${{ secrets.IOT_LAB_KEY }}
+        IOT_LAB_KEY_PUB: ${{ secrets.IOT_LAB_KEY_PUB }}
+      run: |
+        mkdir -p ~/.ssh
+        echo "${IOT_LAB_KEY}" > ~/.ssh/id_fitiot
+        echo "${IOT_LAB_KEY_PUB}" > ~/.ssh/id_fitiot.pub
+        chmod 600 ~/.ssh/id_fitiot
+        chmod 600 ~/.ssh/id_fitiot.pub
+    - run: ./result/run

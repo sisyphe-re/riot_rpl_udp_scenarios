@@ -1,0 +1,17 @@
+---
+- name: Execute the HVAC scenario in grenoble
+  hosts: grenoble
+
+  tasks:
+    - include: experiment.yml
+      vars:
+        SITE: grenoble
+        SENSORS_N: 100
+        BORDERS_N: 5
+        SERVERS_N: 3
+        DURATION: 10090
+        PACKET_LENGTH: 60
+        EXP_PARAMETER: 0.0
+        PERIOD_PARAMETER: 260
+        GENERATION_TYPE: PERIODIC
+        ZSTD_VERSION: 1.4.9

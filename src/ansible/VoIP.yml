@@ -1,0 +1,17 @@
+---
+- name: Execute the VoIP scenario in grenoble
+  hosts: grenoble
+
+  tasks:
+    - include: experiment.yml
+      vars:
+        SITE: grenoble
+        SENSORS_N: 10
+        BORDERS_N: 1
+        SERVERS_N: 3
+        DURATION: 10090
+        PACKET_LENGTH: 127
+        EXP_PARAMETER: 15.74
+        PERIOD_PARAMETER: 0.063532
+        GENERATION_TYPE: HYBRID
+        ZSTD_VERSION: 1.4.9

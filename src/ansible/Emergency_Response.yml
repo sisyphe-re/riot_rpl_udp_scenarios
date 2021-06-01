@@ -1,0 +1,17 @@
+---
+- name: Execute the Emergency Response scenario in paris
+  hosts: paris
+
+  tasks:
+    - include: experiment.yml
+      vars:
+        SITE: paris
+        SENSORS_N: 40
+        BORDERS_N: 5
+        SERVERS_N: 3
+        DURATION: 10090
+        PACKET_LENGTH: 127
+        EXP_PARAMETER: 0.0333
+        PERIOD_PARAMETER: 30.0
+        GENERATION_TYPE: HYBRID
+        ZSTD_VERSION: 1.4.9

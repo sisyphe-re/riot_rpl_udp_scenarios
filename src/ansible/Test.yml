@@ -1,0 +1,17 @@
+---
+- name: Execute a test scenario in paris
+  hosts: paris
+
+  tasks:
+    - include: "{{ lookup('env', 'BASE_EXPERIMENT') }}"
+      vars:
+        SITE: paris
+        SENSORS_N: 5
+        BORDERS_N: 5
+        SERVERS_N: 3
+        DURATION: 10
+        PACKET_LENGTH: 127
+        EXP_PARAMETER: 0.1
+        PERIOD_PARAMETER: 1.0
+        GENERATION_TYPE: HYBRID
+        ZSTD_VERSION: 1.4.9

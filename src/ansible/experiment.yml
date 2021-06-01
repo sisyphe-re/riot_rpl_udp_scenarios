@@ -1,0 +1,209 @@
+---
+- name: Ensure ZSTD is available on the frontend server
+  ansible.builtin.unarchive:
+    remote_src: yes
+    src: https://github.com/facebook/zstd/releases/download/v{{ ZSTD_VERSION }}/zstd-{{ ZSTD_VERSION }}.tar.gz
+    dest: ~/
+
+- name: Build ZSTD on the frontend server
+  shell:
+    cmd: cd ~/zstd-{{ ZSTD_VERSION }} && make
+
+- name: Ensure the firmware are available on the frontend server
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: ~/shared/
+  with_items: "{{ lookup('env', 'FIRMWARES').split() }}"
+
+- name: Ensure the server is available on the frontend server
+  ansible.builtin.copy:
+    src: "{{ lookup('env', 'SCRIPTS_PATH') }}/server.py"
+    dest: ~/shared/
+    mode: a+x
+
+- name: Ensure the subnet generator is available on the frontend server
+  ansible.builtin.copy:
+    src: "{{ lookup('env', 'SCRIPTS_PATH') }}/generate_random_range.py"
+    dest: ~/
+    mode: a+x
+
+- name: Ensure RIOT is available in the A8 nodes
+  git:
+    repo: https://github.com/riot-os/riot
+    dest: ~/shared/RIOT
+    accept_hostkey: yes
+    depth: 1
+
+- name: Launch a new experiment and obtain its ID
+  shell:
+    cmd: iotlab-experiment submit -d {{ DURATION }} -l {{ SENSORS_N }},archi=m3:at86rf231+site={{ SITE }},shared/gnrc_networking.elf -l {{ BORDERS_N }},archi=m3:at86rf231+site={{ SITE }},shared/gnrc_border_router.elf -l {{ SERVERS_N }},archi=a8:at86rf231+site={{ SITE }}  | jq ".id"
+  args:
+    executable: /bin/bash
+  register: ID
+
+- debug:
+    msg: "{{ ID }}"
+
+- name: Wait for the experiment to start
+  shell:
+    cmd: iotlab-experiment wait -i {{ ID.stdout }}
+
+- name: Get the list of sensors
+  shell:
+    cmd: iotlab-experiment get -i {{ ID.stdout }} -p | jq '.firmwareassociations[] | select(.firmwarename | contains("border_router") | not) | .nodes | map( split(".")[0] | split("-")[1] ) | join("+")'
+  args:
+    executable: /bin/bash
+  register: SENSORS_LIST
+
+- name: Get the list of border routers
+  shell:
+    cmd: iotlab-experiment get -i {{ ID.stdout }} -p | jq '.firmwareassociations[] | select(.firmwarename | contains("border_router")) | .nodes | map( split(".")[0] ) | join(" ")'
+  args:
+    executable: /bin/bash
+  register: ROUTERS_LIST
+
+- name: Get the list of servers
+  shell:
+    cmd: iotlab-experiment get -i {{ ID.stdout }} -p | jq -r '.nodes[] | select(contains("a8"))'
+  args:
+    executable: /bin/bash
+  register: SERVERS_LIST
+
+- name: Wait 20 seconds for A8 nodes to boot
+  wait_for:
+    timeout: 20
+
+- name: Find the A8 nodes status
+  wait_for:
+    port: 22
+    host: "node-{{ item }}"
+    search_regex: OpenSSH
+    timeout: 5
+  register: A8_STATUS
+  ignore_errors: true
+  loop: "{{ SERVERS_LIST.stdout.split('\n') | list }}"
+
+- name: Extract the A8 alive nodes
+  set_fact: 
+    SERVERS: "{{ A8_STATUS.results | selectattr('failed', 'equalto', false) | list }}"
+
+- name: Extract the first alive A8 node
+  set_fact: 
+    SERVER: "{{ SERVERS[0].item }}"
+
+- name: Ensure the ~/.ssh/known_hosts file exists
+  copy:
+    content: ""
+    dest: ~/.ssh/known_hosts
+    force: no
+
+- name: Ensure the ~/.ssh/config file exists end ensure some keepalive exists
+  copy:
+    content: |
+      Host *
+      ServerAliveInterval 60
+
+    dest: ~/.ssh/config
+    force: no
+
+- name: Deploy the SSH private key for the experiment data streaming
+  copy:
+    content: "{{ lookup('env', 'DEPLOY_KEY') }}"
+    dest: ~/.ssh/stream_key
+    force: no
+
+- name: Deploy the SSH public key for the experiment data streaming
+  copy:
+    content: "{{ lookup('env', 'DEPLOY_KEY_PUB') }}"
+    dest: ~/.ssh/stream_key.pub
+    force: no
+
+- name: Ensure the server is in the known hosts
+  shell:
+    cmd: ssh-keygen -R node-{{ SERVER }} && ssh-keyscan node-{{ SERVER }} >> ~/.ssh/known_hosts
+  args:
+    executable: /bin/bash
+
+- name: Ensure the streaming server is in the known hosts
+  shell:
+    cmd: ssh-keygen -R medina.grunblatt.org && ssh-keyscan medina.grunblatt.org >> ~/.ssh/known_hosts
+  args:
+    executable: /bin/bash
+
+- name: Get the IP of the server
+  shell:
+    cmd: ssh root@node-{{ SERVER }}  "grep INET6_ADDR /var/local/config/ipv6 | sed 's/.*INET6_ADDR=\"\(.*\)\/64\"/\1/g'"
+  args:
+    executable: /bin/bash
+  register: SERVER_IP
+
+- name: Create the redirection script
+  copy:
+    content: |
+      #!/usr/bin/env bash
+
+      trap 'catch_signal' SIGTERM SIGINT
+
+      catch_signal() {
+        echo "Catch SIGTERM signal" >&2
+
+        # Stop the server
+        tmux kill-session -t server-ssh-{{ ID.stdout }}
+
+        # Stop the serial aggregator
+        tmux kill-session -t serial-{{ ID.stdout }}
+
+        # Stop the border router connections
+        for ROUTER in {{ ROUTERS_LIST.stdout[1:-1] }}
+        do
+          tmux kill-session -t node-${ROUTER}-{{ ID.stdout }}
+        done
+
+        # We do not stop the zstd process: they will stop when they finish, automatically
+      }
+
+      # We create a FIFO to store the output of the server
+      tmp_server_output=$(mktemp -u)
+      mkfifo -m 600 "$tmp_server_output"
+
+      # Start the server
+      tmux new -s server-ssh-{{ ID.stdout }} -d "ssh root@node-{{ SERVER }}  \"cd ~/A8/ && ./server.py\" | tee ${tmp_server_output}"
+      tmux new -s server-zstd-{{ ID.stdout }} -d "cat ${tmp_server_output} | ~/zstd-{{ ZSTD_VERSION }}/zstd -19 --stdout | ssh -i ~/.ssh/stream_key fitiot@medina.grunblatt.org \"cat - > {{ ID.stdout }}-server_output.zst\""
+
+      # Start border routers
+      ITER=$((100 + $RANDOM % 1000))
+      for ROUTER in {{ ROUTERS_LIST.stdout[1:-1] }}
+      do
+        ROUTER_OUTFILE="${HOME}/.iot-lab/{{ ID.stdout }}/border_${ROUTER}_output"
+        RANDOM_IPV6_SUBNET=$(~/generate_random_range.py)
+        tmux new -s node-${ROUTER}-{{ ID.stdout }} -d "sudo ethos_uhcpd.py ${ROUTER} tap${ITER} ${RANDOM_IPV6_SUBNET} 2>&1 | tee ${ROUTER_OUTFILE}"
+        ITER=$(expr $ITER + 1)
+      done
+
+      # Pass the experiment parameter to the sensors
+      echo -e  "{{ SERVER_IP.stdout }}\n{{ GENERATION_TYPE }}\n{{ EXP_PARAMETER }}\n{{ PERIOD_PARAMETER }}\n{{ PACKET_LENGTH }}" | while read -r line; do sleep 2; echo "$line"; done | serial_aggregator -l {{ SITE }},m3,{{ SENSORS_LIST.stdout }}
+      sleep 5;
+
+      # We create a FIFO to store the output of the nodes
+      tmp_serial_output=$(mktemp -u)
+      mkfifo -m 600 "$tmp_serial_output"
+
+      # We need to use tmux because the serial_aggregator needs a stdin
+      tmux new -s serial-{{ ID.stdout }} -d "serial_aggregator -l {{ SITE }},m3,{{ SENSORS_LIST.stdout }} | tee ${tmp_serial_output}"
+      tmux new -s serial-zstd-{{ ID.stdout }} -d "cat ${tmp_serial_output} | ~/zstd-{{ ZSTD_VERSION }}/zstd -19 --stdout | ssh -i ~/.ssh/stream_key fitiot@medina.grunblatt.org \"cat - > {{ ID.stdout }}-serial_output.zst\""
+
+      # Wait forever
+      cat
+
+    dest: "~/.senslab/{{ ID.stdout }}/collection_script.sh"
+    mode: a+x
+
+- name: Redirect the output of the sensors to some file
+  shell:
+    cmd: iotlab-experiment script -i {{ ID.stdout }} --run {{ SITE }},script=~/.senslab/{{ ID.stdout }}/collection_script.sh
+  args:
+    executable: /bin/bash
+  register: SERIAL_BIS
+
+- debug:
+    msg: "{{ SERIAL_BIS }}"

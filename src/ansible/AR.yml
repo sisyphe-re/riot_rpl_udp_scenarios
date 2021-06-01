@@ -1,0 +1,17 @@
+---
+- name: Execute the AR scenario in grenoble
+  hosts: grenoble
+
+  tasks:
+    - include: experiment.yml
+      vars:
+        SITE: grenoble
+        SENSORS_N: 10
+        BORDERS_N: 3
+        SERVERS_N: 3
+        DURATION: 10090
+        PACKET_LENGTH: 127
+        EXP_PARAMETER: 196.84
+        PERIOD_PARAMETER: 0.0
+        GENERATION_TYPE: EXPONENTIAL
+        ZSTD_VERSION: 1.4.9
