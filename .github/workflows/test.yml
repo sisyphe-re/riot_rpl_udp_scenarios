@@ -17,12 +17,9 @@ jobs:
       run: nix build
     - name: set secrets
       env:
-        IOT_LAB_KEY: ${{ secrets.IOT_LAB_KEY }}
-        IOT_LAB_KEY_PUB: ${{ secrets.IOT_LAB_KEY_PUB }}
-      run: |
-        mkdir -p ~/.ssh
-        echo "${IOT_LAB_KEY}" > ~/.ssh/id_fitiot
-        echo "${IOT_LAB_KEY_PUB}" > ~/.ssh/id_fitiot.pub
-        chmod 600 ~/.ssh/id_fitiot
-        chmod 600 ~/.ssh/id_fitiot.pub
-    - run: ./result/run
+        FITIOT_USER: ${{ secrets.FITIOT_USER }}
+        FITIOT_KEY: ${{ secrets.FITIOT_KEY }}
+        STREAM_USER: ${{ secrets.STREAM_USER }}
+        STREAM_HOST: ${{ secrets.STREAM_HOST }}
+        STREAM_KEY: ${{ secrets.STREAM_KEY }}
+      run: ./result/run

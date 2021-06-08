@@ -108,14 +108,8 @@
 
 - name: Deploy the SSH private key for the experiment data streaming
   copy:
-    content: "{{ lookup('env', 'DEPLOY_KEY') }}"
+    content: "{{ lookup('env', 'STREAM_KEY') | b64decode}}"
     dest: ~/.ssh/stream_key
-    force: no
-
-- name: Deploy the SSH public key for the experiment data streaming
-  copy:
-    content: "{{ lookup('env', 'DEPLOY_KEY_PUB') }}"
-    dest: ~/.ssh/stream_key.pub
     force: no
 
 - name: Ensure the server is in the known hosts
@@ -126,7 +120,7 @@
 
 - name: Ensure the streaming server is in the known hosts
   shell:
-    cmd: ssh-keygen -R medina.grunblatt.org && ssh-keyscan medina.grunblatt.org >> ~/.ssh/known_hosts
+    cmd: ssh-keygen -R {{ lookup('env', 'STREAM_SERVER') }} && ssh-keyscan {{ lookup('env', 'STREAM_SERVER') }} >> ~/.ssh/known_hosts
   args:
     executable: /bin/bash
 
@@ -168,7 +162,7 @@
 
       # Start the server
       tmux new -s server-ssh-{{ ID.stdout }} -d "ssh root@node-{{ SERVER }}  \"cd ~/A8/ && ./server.py\" | tee ${tmp_server_output}"
-      tmux new -s server-zstd-{{ ID.stdout }} -d "cat ${tmp_server_output} | ~/zstd-{{ ZSTD_VERSION }}/zstd -19 --stdout | ssh -i ~/.ssh/stream_key fitiot@medina.grunblatt.org \"cat - > {{ ID.stdout }}-server_output.zst\""
+      tmux new -s server-zstd-{{ ID.stdout }} -d "cat ${tmp_server_output} | ~/zstd-{{ ZSTD_VERSION }}/zstd -19 --stdout | ssh -i ~/.ssh/stream_key {{ lookup('env', 'STREAM_USER') }}@{{ lookup('env', 'STREAM_SERVER') }} \"cat - > {{ ID.stdout }}-server_output.zst\""
 
       # Start border routers
       ITER=$((100 + $RANDOM % 1000))
@@ -190,7 +184,7 @@
 
       # We need to use tmux because the serial_aggregator needs a stdin
       tmux new -s serial-{{ ID.stdout }} -d "serial_aggregator -l {{ SITE }},m3,{{ SENSORS_LIST.stdout }} | tee ${tmp_serial_output}"
-      tmux new -s serial-zstd-{{ ID.stdout }} -d "cat ${tmp_serial_output} | ~/zstd-{{ ZSTD_VERSION }}/zstd -19 --stdout | ssh -i ~/.ssh/stream_key fitiot@medina.grunblatt.org \"cat - > {{ ID.stdout }}-serial_output.zst\""
+      tmux new -s serial-zstd-{{ ID.stdout }} -d "cat ${tmp_serial_output} | ~/zstd-{{ ZSTD_VERSION }}/zstd -19 --stdout | ssh -i ~/.ssh/stream_key {{ lookup('env', 'STREAM_USER') }}@{{ lookup('env', 'STREAM_SERVER') }} \"cat - > {{ ID.stdout }}-serial_output.zst\""
 
       # Wait forever
       cat

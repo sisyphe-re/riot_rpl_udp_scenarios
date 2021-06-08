@@ -6,25 +6,35 @@
   outputs = { self, nixpkgs, firmwares }:
     with import nixpkgs { system = "x86_64-linux"; };
     let
-      configure_script = pkgs.writeScriptBin "configure" ''
-        #!${bash}/bin/bash
-        echo "Configure Phase.";
-      '';
-      build_script = pkgs.writeScriptBin "build" ''
-        #!${bash}/bin/bash
-        echo "Build Phase.";
-      '';
       run_script = pkgs.writeScriptBin "run" ''
         #!${bash}/bin/bash
-        echo "Home is $HOME";
+
+        if [ -z ''${FITIOT_USER+x} ]; then echo "FITIOT_USER is unset."; exit 1; else echo "FITIOT_USER is set to '$FITIOT_USER'."; fi
+        if [ -z ''${FITIOT_KEY+x} ]; then echo "FITIOT_KEY is unset."; exit 1; else echo "FITIOT_KEY is set."; fi
+
+        if [ -z ''${STREAM_USER+x} ]; then echo "STREAM_USER is unset."; exit 1; else echo "STREAM_USER is set to '$STREAM_USER'."; fi
+        if [ -z ''${STREAM_HOST+x} ]; then echo "STREAM_HOST is unset."; exit 1; else echo "STREAM_HOST is set to '$STREAM_HOST'."; fi
+        if [ -z ''${STREAM_KEY+x} ]; then echo "STREAM_KEY is unset."; exit 1; else echo "STREAM_KEY is set."; fi
+
         export BASE_EXPERIMENT="${./src/ansible/experiment.yml}";
         export SCRIPTS_PATH="${./src/scripts}";
+
+        mkdir -p ~/.ssh/
+        echo ''${FITIOT_KEY} | base64 -d &> ~/.ssh/id_fitiot
+        chmod 600 ~/.ssh/id_fitiot
+
+        echo "HOME is ''${HOME}"
+
+        for site in {paris,grenoble,saclay,strasbourg,lyon,lille};
+        do
+            ${openssh}/bin/ssh-keyscan -t rsa ''${site}.iot-lab.info >> ~/.ssh/known_hosts;
+        done
+
         echo "Trying to run uptime on the server"
         ${openssh}/bin/ssh -o UserKnownHostsFile=~/.ssh/known_hosts -o StrictHostKeyChecking=no -i ~/.ssh/id_fitiot grunblat@paris.iot-lab.info uptime
-        echo "Showing the key"
-        cat /run/riot_udp/.ssh/id_fitiot
+
         echo "Running ansible-playbook"
-        ${ansible}/bin/ansible-playbook -i ${./hosts} ${./src/ansible/Test.yml}
+        ${ansible}/bin/ansible-playbook -i ${./hosts} ${./src/ansible/Test.yml} --extra-vars "ansible_user=''${FITIOT_USER} ansible_ssh_private_key_file=''${HOME}/.ssh/id_fitiot ansible_ssh_extra_args=\"-o UserKnownHostsFile=''${HOME}/.ssh/known_hosts\""
       '';
     in
     {
@@ -33,14 +43,10 @@
           src = self;
           name = "scripts";
           buildInputs = [
-            configure_script
-            build_script
             run_script
           ];
           installPhase = ''
             mkdir $out;
-            cp ${configure_script}/bin/configure $out;
-            cp ${build_script}/bin/build $out;
             cp ${run_script}/bin/run $out;
           '';
         };
