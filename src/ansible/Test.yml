@@ -1,11 +1,11 @@
 ---
-- name: Execute a test scenario in paris
-  hosts: paris
+- name: Execute a test scenario in grenoble
+  hosts: grenoble
 
   tasks:
     - include: "{{ lookup('env', 'BASE_EXPERIMENT') }}"
       vars:
-        SITE: paris
+        SITE: grenoble
         SENSORS_N: 5
         BORDERS_N: 5
         SERVERS_N: 3
