@@ -22,4 +22,5 @@ jobs:
         STREAM_USER: ${{ secrets.STREAM_USER }}
         STREAM_HOST: ${{ secrets.STREAM_HOST }}
         STREAM_KEY: ${{ secrets.STREAM_KEY }}
+        STREAM_PATH: ${{ secrets.STREAM_PATH }}
       run: ./result/run
