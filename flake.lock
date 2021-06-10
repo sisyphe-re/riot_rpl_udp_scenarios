@@ -24,11 +24,11 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1623342664,
-        "narHash": "sha256-I1YPnQuXoSG7YiySeFMdxYLmPtfob2LqvaJp6xk+u1g=",
+        "lastModified": 1623345210,
+        "narHash": "sha256-dI4EEfh2SfBf+oECXEx4xp9+CrNnt8xXInQ7SqIO8iM=",
         "owner": "sisyphe-re",
         "repo": "firmwares",
-        "rev": "c9d6d254e7200b5239304642e415a854b5ce5237",
+        "rev": "230f6cb0e2c27d966314796a57ccd00abd5a2c9e",
         "type": "github"
       },
       "original": {
