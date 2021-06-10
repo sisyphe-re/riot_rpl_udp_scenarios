@@ -14,11 +14,11 @@
 
         if [ -z ''${STREAM_USER+x} ]; then echo "STREAM_USER is unset."; exit 1; else echo "STREAM_USER is set to '$STREAM_USER'."; fi
         if [ -z ''${STREAM_HOST+x} ]; then echo "STREAM_HOST is unset."; exit 1; else echo "STREAM_HOST is set to '$STREAM_HOST'."; fi
-        if [ -z ''${STREAM_PATH+x} ]; then echo "STREAM_PATH is unset."; exit 1; else echo "STREAM_PATH is set to '$STREAM_PATH'."; fi
         if [ -z ''${STREAM_KEY+x} ]; then echo "STREAM_KEY is unset."; exit 1; else echo "STREAM_KEY is set."; fi
 
         export BASE_EXPERIMENT="${./src/ansible/experiment.yml}";
         export SCRIPTS_PATH="${./src/scripts}";
+        export FIRMWARES="${firmwares.packages.x86_64-linux.all-the-firmwares}";
 
         mkdir -p ~/.ssh/
         echo ''${FITIOT_KEY} | base64 -d &> ~/.ssh/id_fitiot
