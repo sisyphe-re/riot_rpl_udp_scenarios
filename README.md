@@ -13,10 +13,12 @@ The directory structure is the following:
 ## Usage
 
 ```
-$ # The STREAM_* variables are used to connect to some external server and stream the experimental data as the available space on the FIT IoT-Lab frontend server is limited
-$ export STREAM_USER="myusername"
-$ export STREAM_SERVER="myserver.tld"
-$ export STREAM_KEY="stream_server_private_key_base64_encoded"
+$ # The SSH_* variables are used to connect to some external server and stream the experimental data as the available space on the FIT IoT-Lab frontend server is limited
+$ export SSH_PORT="22"
+$ export SSH_USER="myusername"
+$ export SSH_HOST="myserver.tld"
+$ export SSH_PRIVATE_KEY="stream_server_private_key"
+$ export SSH_PATH="/home/foobar"
 $ # The FITIOT_* variables are used to connect to the FIT IoT-Lab frontend server. The FITIOT_KEY is the base64 encoded SSH key.
 $ export FITIOT_KEY="frontend_server_private_key_base64_encoded"
 $ export FITIOT_USER="myuseronfitiotlab"
