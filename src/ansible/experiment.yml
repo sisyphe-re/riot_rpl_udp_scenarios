@@ -162,7 +162,7 @@
 
       # Start the server
       tmux new -s server-ssh-{{ ID.stdout }} -d "ssh root@node-{{ SERVER }}  \"cd ~/A8/ && ./server.py\" | tee ${tmp_server_output}"
-      tmux new -s server-zstd-{{ ID.stdout }} -d "cat ${tmp_server_output} | ~/zstd-{{ ZSTD_VERSION }}/zstd -19 --stdout | ssh -i ~/.ssh/stream_key -p {{ lookup('env', 'SSH_PORT') }} {{ lookup('env', 'SSH_USER') }}@{{ lookup('env', 'SSH_HOST') }} \"cat - > {{ lookup('env', 'SSH_PATH') }}/{{ ID.stdout }}-server_output.zst\""
+      tmux new -s server-zstd-{{ ID.stdout }} -d "cat ${tmp_server_output} | ~/zstd-{{ ZSTD_VERSION }}/zstd -19 --stdout | ssh -i ~/.ssh/stream_key -p {{ lookup('env', 'SSH_PORT') }} {{ lookup('env', 'SSH_USER') }}@{{ lookup('env', 'SSH_HOST') }} \"cat - > {{ ID.stdout }}-server_output.zst\""
 
       # Start border routers
       ITER=$((100 + $RANDOM % 1000))
@@ -184,7 +184,7 @@
 
       # We need to use tmux because the serial_aggregator needs a stdin
       tmux new -s serial-{{ ID.stdout }} -d "serial_aggregator -l {{ SITE }},m3,{{ SENSORS_LIST.stdout }} | tee ${tmp_serial_output}"
-      tmux new -s serial-zstd-{{ ID.stdout }} -d "cat ${tmp_serial_output} | ~/zstd-{{ ZSTD_VERSION }}/zstd -19 --stdout | ssh -i ~/.ssh/stream_key -p {{ lookup('env', 'SSH_PORT') }} {{ lookup('env', 'SSH_USER') }}@{{ lookup('env', 'SSH_HOST') }} \"cat - > {{ lookup('env', 'SSH_PATH') }}/{{ ID.stdout }}-serial_output.zst\""
+      tmux new -s serial-zstd-{{ ID.stdout }} -d "cat ${tmp_serial_output} | ~/zstd-{{ ZSTD_VERSION }}/zstd -19 --stdout | ssh -i ~/.ssh/stream_key -p {{ lookup('env', 'SSH_PORT') }} {{ lookup('env', 'SSH_USER') }}@{{ lookup('env', 'SSH_HOST') }} \"cat - > {{ ID.stdout }}-serial_output.zst\""
 
       # Wait forever
       cat

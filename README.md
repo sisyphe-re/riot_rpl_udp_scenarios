@@ -18,7 +18,6 @@ $ export SSH_PORT="22"
 $ export SSH_USER="myusername"
 $ export SSH_HOST="myserver.tld"
 $ export SSH_PRIVATE_KEY="stream_server_private_key"
-$ export SSH_PATH="/home/foobar"
 $ # The FITIOT_* variables are used to connect to the FIT IoT-Lab frontend server. The FITIOT_KEY is the base64 encoded SSH key.
 $ export FITIOT_KEY="frontend_server_private_key_base64_encoded"
 $ export FITIOT_USER="myuseronfitiotlab"
