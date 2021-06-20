@@ -24,12 +24,9 @@
         export FIRMWARES="${firmwares.packages.x86_64-linux.all-the-firmwares}";
 
         mkdir -p ~/.ssh/
-        echo "''${FITIOT_PRIVATE_KEY}" &> ~/.ssh/id_fitiot
-        echo "''${FITIOT_PUBLIC_KEY}" &> ~/.ssh/id_fitiot.pub
+        echo "''${FITIOT_PRIVATE_KEY}" | base64 -d &> ~/.ssh/id_fitiot
+        echo "''${FITIOT_PUBLIC_KEY}" | base64 -d &> ~/.ssh/id_fitiot.pub
         chmod 600 ~/.ssh/id_fitiot
-        cat ~/.ssh/id_fitiot
-        ls -alh ~/.ssh/id_fitiot
-        file ~/.ssh/id_fitiot
         echo "HOME is ''${HOME}"
 
         for site in {paris,grenoble,saclay,strasbourg,lyon,lille};
