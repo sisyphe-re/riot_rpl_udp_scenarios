@@ -126,7 +126,7 @@
 
 - name: Ensure the streaming server is in the known hosts
   shell:
-    cmd: ssh-keygen -R {{ lookup('env', 'SSH_HOST') }} && ssh-keyscan -4 -p {{ lookup('env', 'SSH_PORT') }} {{ lookup('env', 'SSH_HOST') }} >> ~/.ssh/known_hosts
+    cmd: ssh-keygen -R '[{{ lookup('env', 'SSH_HOST') }}]:{{ lookup('env', 'SSH_PORT') }}' && ssh-keyscan -4 -p {{ lookup('env', 'SSH_PORT') }} {{ lookup('env', 'SSH_HOST') }} >> ~/.ssh/known_hosts
   args:
     executable: /bin/bash
 
