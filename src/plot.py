@@ -12,6 +12,8 @@ import itertools
 import matplotlib.pyplot as plt
 import sys
 
+plt.rcParams["figure.figsize"] = (20,20)
+
 def extract_rank(node, timestamp):
     for obj in evolution[node]:
         if obj['start'] <= pd.Timestamp(timestamp) and pd.Timestamp(timestamp) <= obj['end']:
