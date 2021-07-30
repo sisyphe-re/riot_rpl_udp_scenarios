@@ -3,7 +3,7 @@
   hosts: strasbourg
 
   tasks:
-    - include: experiment.yml
+    - include: "{{ lookup('env', 'BASE_EXPERIMENT') }}"
       vars:
         SITE: strasbourg
         SENSORS_N: 30

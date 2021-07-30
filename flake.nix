@@ -40,7 +40,7 @@
         ${openssh}/bin/ssh -v -o UserKnownHostsFile=~/.ssh/known_hosts -o StrictHostKeyChecking=no -i ~/.ssh/id_fitiot grunblat@paris.iot-lab.info uptime
 
         echo "Running ansible-playbook"
-        ${ansible}/bin/ansible-playbook -i ${./hosts} ${./src/ansible/Test.yml} --extra-vars "ansible_user=''${FITIOT_USER} ansible_ssh_private_key_file=''${HOME}/.ssh/id_fitiot ansible_ssh_extra_args=\"-o UserKnownHostsFile=''${HOME}/.ssh/known_hosts\""
+        ${ansible}/bin/ansible-playbook -i ${./hosts} ${./src/ansible/sisyphe.yml} --extra-vars "ansible_user=''${FITIOT_USER} ansible_ssh_private_key_file=''${HOME}/.ssh/id_fitiot ansible_ssh_extra_args=\"-o UserKnownHostsFile=''${HOME}/.ssh/known_hosts\""
       '';
       finalize_script = pkgs.writeScriptBin "finalize" ''
         #!${bash}/bin/bash

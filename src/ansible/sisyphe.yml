@@ -1,5 +1,5 @@
 ---
-- name: Execute the HVAC scenario in grenoble
+- name: Execute the HVAC scenario in grenoble for 1 hour
   hosts: grenoble
 
   tasks:
@@ -9,7 +9,7 @@
         SENSORS_N: 100
         BORDERS_N: 5
         SERVERS_N: 3
-        DURATION: 10090
+        DURATION: 60
         PACKET_LENGTH: 60
         EXP_PARAMETER: 0.0
         PERIOD_PARAMETER: 260
