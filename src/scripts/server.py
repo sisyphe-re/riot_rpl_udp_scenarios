@@ -12,5 +12,5 @@ sock.bind((IP, PORT))
 print("Date,Address,Port,Data", flush=True)
 while True:
     data, addr = sock.recvfrom(1024)
-    now = datetime.datetime.now()
+    now = datetime.datetime.now(datetime.timezone.utc)
     print("%s,%s,%s,%s" % (now, addr[0], addr[1], data.hex()[:10]), flush=True)
