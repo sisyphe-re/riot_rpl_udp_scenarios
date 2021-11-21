@@ -1,17 +1,17 @@
 ---
-- name: Execute the HVAC scenario in grenoble for 1 hour
+- name: Execute the AR scenario in grenoble
   hosts: grenoble
 
   tasks:
     - include: "{{ lookup('env', 'BASE_EXPERIMENT') }}"
       vars:
         SITE: grenoble
-        SENSORS_N: 100
-        BORDERS_N: 5
+        SENSORS_N: 10
+        BORDERS_N: 3
         SERVERS_N: 3
         DURATION: 60
-        PACKET_LENGTH: 60
-        EXP_PARAMETER: 0.0
-        PERIOD_PARAMETER: 260
-        GENERATION_TYPE: PERIODIC
+        PACKET_LENGTH: 127
+        EXP_PARAMETER: 196.84
+        PERIOD_PARAMETER: 0.0
+        GENERATION_TYPE: EXPONENTIAL
         ZSTD_VERSION: 1.4.9
