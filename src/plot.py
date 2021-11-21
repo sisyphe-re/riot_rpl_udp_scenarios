@@ -35,8 +35,9 @@ udp = pd.read_sql_query("select Node,Timestamp,Payload from udp;", con)
 server = pd.read_sql_query("select * from server;", con)
 
 server["payload"] = server["payload"].str.upper()
-server["Timestamp"] = pd.to_datetime(server["Timestamp"], format='%Y-%m-%d %H:%M:%S.%f')
-udp["Timestamp"] = pd.to_datetime(udp["Timestamp"], format='%Y-%m-%d %H:%M:%S.%f')
+
+server["Timestamp"] = pd.to_datetime(server["Timestamp"])
+udp["Timestamp"] = pd.to_datetime(udp["Timestamp"])
 
 # Drop payload that have not been received
 udp = udp.drop_duplicates(subset=['payload'], keep=False)
@@ -68,7 +69,7 @@ for node in set(positive["Node"]):
             end = pd.Timestamp(timestamp)
     evolution[node].append({'start': start, 'end': end, 'value': val})
 
-positive['Rank']=positive.apply(lambda x: extract_rank(x[0], x['Timestamp_udp']), axis=1)
+positive['Rank'] = positive.apply(lambda x: extract_rank(x[0], x['Timestamp_udp']), axis=1)
 positive['color'] = positive['Rank'].apply(lambda x: 'red' if x <= 512 else 'green' if x <= 768 else  'blue' if x <= 1024  else 'yellow')
 plt.scatter(x='Timestamp_udp', y='Delay', data=positive, color='color')
 plt.xlabel("Date")
